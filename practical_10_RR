@@ -1,0 +1,119 @@
+#include <stdio.h>
+
+void average(int n, int processes[][6]) {
+    int w = 0;
+    int t = 0;
+    for (int i = 0; i < n; i++) {
+        w += processes[i][5];
+        t += processes[i][4];
+    }
+    float avg_w = (float)w / n;
+    float avg_t = (float)t / n;
+    printf("\nAverage Turn Around Time : %f", avg_t);
+    printf("\nAverage Waiting Time : %f", avg_w);
+}
+
+void display(int n, int processes[][6]) {
+    printf("\n");
+    for (int i = 0; i < n; i++) {
+        printf("P");
+        for (int j = 0; j < 6; j++) {
+            printf("%d ", processes[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void WT(int n, int processes[][6]) {
+    for (int i = 0; i < n; i++) {
+        processes[i][5] = processes[i][4] - processes[i][2];
+    }
+    printf("\nAfter RR:");
+    display(n, processes);
+    average(n, processes);
+}
+
+void TAT(int n, int processes[][6]) {
+    for (int i = 0; i < n; i++) {
+        processes[i][4] = processes[i][3] - processes[i][1];
+    }
+    WT(n, processes);
+}
+
+void CT(int n, int processes[][6], int c[], int v) {
+    for (int i = 1; i < n; i++) {
+        processes[i][3] = c[i];
+    }
+    processes[0][3] = v;
+    TAT(n, processes);
+}
+
+void RR(int n, int processes[][6], int quantum) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (processes[j][1] > processes[j + 1][1]) {
+                for (int k = 0; k < 6; k++) {
+                    int temp = processes[j][k];
+                    processes[j][k] = processes[j + 1][k];
+                    processes[j + 1][k] = temp;
+                }
+            }
+        }
+    }
+    int r[n];
+    int c[n];
+    int k = processes[0][1];
+    for (int i = 0; i < n; i++) {
+        r[i] = processes[i][2];
+        c[i] = -1;
+    }
+    int v;
+    while (1) {
+        int allProcessComplete = 1;
+        for (int i = 0; i < n; i++) {
+            if (r[i] > 0) {
+                allProcessComplete = 0;
+                int d = (r[i] > quantum) ? quantum : r[i];
+                k += d;
+                r[i] -= d;
+                if (r[i] == 0 && c[i] == -1) {
+                    c[i] = k;
+                    if (i == 0) {
+                        v = k;
+                    }
+                }
+                printf("Process %d executed for %d units of time. Remaining time: %d\n", i + 1, d, r[i]);
+            }
+        }
+        if (allProcessComplete) {
+            break;
+        }
+    }
+    CT(n, processes, c, v);
+}
+
+int main() {
+    int n;
+    int q;
+    printf("Enter total number of processes: ");
+    scanf("%d", &n);
+    printf("Enter the Quantum: ");
+    scanf("%d", &q);
+    int arr[n][6];
+    for (int i = 0; i < n; i++) {
+        printf("\n");
+        printf("Enter details for process P%d", i + 1);
+        arr[i][0] = i + 1;
+        printf("\n Arrival Time:");
+        scanf("%d", &arr[i][1]);
+        printf(" Burst Time:");
+        scanf("%d", &arr[i][2]);
+        arr[i][3] = 0;
+        arr[i][4] = 0;
+        arr[i][5] = 0;
+    }
+    printf("\nBefore RR:");
+    display(n, arr);
+    RR(n, arr, q);
+    return 0;
+}
